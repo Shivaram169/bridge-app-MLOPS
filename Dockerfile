@@ -1,59 +1,25 @@
-# ─── Healthcare AI MLOps System ───────────────────────────────────
-# Multi-stage Docker build for production FastAPI service
+# Use Python 3.9
+FROM python:3.9-slim
 
-# Stage 1: Builder
-FROM python:3.11-slim AS builder
-
+# Set the working directory inside the container
 WORKDIR /app
 
-# Install build dependencies
+# Install system essentials
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    libgomp1 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install dependencies
+# Copy your requirements file
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Production image
-FROM python:3.11-slim AS production
+# Install your libraries (XGBoost, FastAPI, etc.)
+RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
+# Copy all your project files (app.py, drift_detection.py, etc.)
+COPY . .
 
-# Security: Create non-root user
-RUN groupadd -r mlops && useradd -r -g mlops mlops
+# Expose the port for your API
+EXPOSE 8000
 
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Copy application code
-COPY api/ ./api/
-COPY src/ ./src/
-COPY config/ ./config/
-COPY monitoring/ ./monitoring/
-
-# Create data directories
-RUN mkdir -p data/raw data/processed data/drift && \
-    chown -R mlops:mlops /app
-
-# Switch to non-root user
-USER mlops
-
-# Expose ports
-EXPOSE 8000 8001
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Run FastAPI with Uvicorn
-CMD ["uvicorn", "api.app:", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Run the app
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
