@@ -1,0 +1,67 @@
+project:
+  name: "Healthcare AI - Hospital Readmission Prediction"
+  version: "1.0.0"
+  author: "MLOps Engineer"
+
+data:
+  raw_path: "data/raw/diabetic_data.csv"
+  processed_path: "data/processed/processed_data.csv"
+  drift_path: "data/drift/"
+  target_column: "readmitted"
+  test_size: 0.2
+  random_state: 42
+
+features:
+  numeric_columns:
+    - "time_in_hospital"
+    - "num_lab_procedures"
+    - "num_procedures"
+    - "num_medications"
+    - "number_outpatient"
+    - "number_emergency"
+    - "number_inpatient"
+    - "number_diagnoses"
+  categorical_columns:
+    - "race"
+    - "gender"
+    - "age"
+    - "admission_type_id"
+    - "discharge_disposition_id"
+    - "admission_source_id"
+    - "max_glu_serum"
+    - "A1Cresult"
+    - "insulin"
+    - "change"
+    - "diabetesMed"
+
+training:
+  models:
+    - "random_forest"
+    - "xgboost"
+    - "logistic_regression"
+  metric: "roc_auc"
+  cv_folds: 5
+  hyperparameter_tuning: true
+  n_trials: 50
+
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "healthcare_readmission"
+  model_registry_name: "readmission_model"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  log_predictions: true
+
+monitoring:
+  drift_threshold: 0.1
+  psi_threshold: 0.2
+  retraining_trigger: true
+  prometheus_port: 8001
+
+aws:
+  region: "ap-south-1"
+  ecr_repository: "healthcare-mlops"
+  ecs_cluster: "healthcare-cluster"
+  s3_bucket: "healthcare-mlops-artifacts"
