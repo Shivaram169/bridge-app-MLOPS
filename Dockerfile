@@ -56,4 +56,4 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Run FastAPI with Uvicorn
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "api.app:", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
